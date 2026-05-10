@@ -12,6 +12,7 @@
   --text-dark: #1a4466;
   --orange:    #ff6a00;
   --green:     #00ff88;
+  --purple:    #bb88ff;
   --border:    rgba(0,212,255,0.2);
   --glass:     rgba(0,30,60,0.6);
   --font-hud:  'Orbitron', 'Share Tech Mono', monospace;
@@ -110,6 +111,29 @@ body {
   font-size: 9px;
   letter-spacing: 2px;
   color: var(--text-dim);
+}
+
+.provider-badge {
+  font-family: var(--font-hud);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  padding: 3px 8px;
+  border: 1px solid rgba(0,212,255,0.4);
+  border-radius: 3px;
+  text-shadow: 0 0 8px rgba(0,212,255,0.5);
+  transition: all 0.3s;
+}
+.provider-badge.ollama {
+  color: var(--green);
+  border-color: rgba(0,255,136,0.4);
+  text-shadow: 0 0 8px rgba(0,255,136,0.5);
+}
+.provider-badge.lmstudio {
+  color: var(--purple);
+  border-color: rgba(187,136,255,0.4);
+  text-shadow: 0 0 8px rgba(187,136,255,0.5);
 }
 
 .model-badge {
@@ -433,6 +457,114 @@ body {
   padding-bottom: 4px;
   border-bottom: 1px solid var(--cyan-faint);
 }
+
+/* Local models title row */
+.rp-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--cyan-faint);
+}
+
+.scan-btn {
+  font-family: var(--font-hud);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--cyan-dim);
+  background: transparent;
+  border: 1px solid var(--cyan-faint);
+  border-radius: 3px;
+  padding: 2px 7px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.scan-btn:hover { color: var(--cyan); border-color: var(--cyan-dim); background: var(--cyan-glow); }
+.scan-btn.scanning { animation: textPulse 0.8s ease-in-out infinite; }
+
+/* Connection status row */
+.conn-row {
+  display: flex;
+  gap: 8px;
+}
+.conn-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-hud);
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  flex: 1;
+}
+.conn-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-dark);
+  flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.conn-dot.online {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: blink 2s ease-in-out infinite;
+}
+.conn-dot.offline { background: #444; }
+.conn-dot.checking {
+  background: var(--orange);
+  animation: blink 0.5s ease-in-out infinite;
+}
+
+/* Local model list */
+.local-list { display: flex; flex-direction: column; gap: 4px; }
+.no-local {
+  font-family: var(--font-hud);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--text-dark);
+  line-height: 1.6;
+  padding: 4px 0;
+}
+
+/* Local model button */
+.local-model-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: transparent;
+  border: 1px solid var(--cyan-faint);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-dim);
+  text-align: left;
+  transition: all 0.2s;
+  width: 100%;
+}
+.local-model-opt:hover {
+  border-color: var(--cyan-dim);
+  background: rgba(0,212,255,0.05);
+  color: var(--text);
+}
+.local-model-opt.active {
+  border-color: var(--green);
+  background: rgba(0,255,136,0.06);
+  color: var(--green);
+  box-shadow: 0 0 8px rgba(0,255,136,0.1);
+}
+.local-model-opt.lmstudio.active {
+  border-color: var(--purple);
+  background: rgba(187,136,255,0.06);
+  color: var(--purple);
+  box-shadow: 0 0 8px rgba(187,136,255,0.1);
+}
+.lmo-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+}
+.local-model-opt.active .lmo-dot { background: currentColor; box-shadow: 0 0 6px currentColor; }
 
 /* Model list */
 .model-list { display: flex; flex-direction: column; gap: 4px; }

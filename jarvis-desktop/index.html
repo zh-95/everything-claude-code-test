@@ -10,247 +10,225 @@
 </head>
 <body>
 
-  <!-- ── TITLE BAR ─────────────────────────────────────────── -->
-  <div class="titlebar" id="titlebar">
-    <div class="tb-left">
-      <div class="logo-text">J.A.R.V.I.S.</div>
-      <div class="status-badge">
-        <span class="status-dot"></span>ONLINE
-      </div>
-    </div>
-    <div class="tb-center">
-      <div class="time-display" id="clock">--:--:--</div>
-      <div class="date-display" id="dateline">---</div>
-    </div>
-    <div class="tb-right">
-      <div class="model-badge" id="active-model-badge">OPUS 4.7</div>
-      <div class="win-controls">
-        <button class="win-btn" id="btn-min" title="Minimize">─</button>
-        <button class="win-btn" id="btn-max" title="Maximize">▭</button>
-        <button class="win-btn danger" id="btn-close" title="Close">✕</button>
-      </div>
+<!-- ── TITLE BAR ──────────────────────────────────────────── -->
+<div class="titlebar">
+  <div class="tb-left">
+    <div class="logo-text">J.A.R.V.I.S.</div>
+    <div class="status-badge"><span class="status-dot"></span>ONLINE</div>
+  </div>
+  <div class="tb-center">
+    <div class="time-display" id="clock">--:--:--</div>
+    <div class="date-display" id="dateline">---</div>
+  </div>
+  <div class="tb-right">
+    <div class="provider-badge" id="provider-badge">CLAUDE</div>
+    <div class="model-badge" id="model-badge">OPUS 4.7</div>
+    <div class="win-controls">
+      <button class="win-btn" id="btn-min">─</button>
+      <button class="win-btn" id="btn-max">▭</button>
+      <button class="win-btn danger" id="btn-close">✕</button>
     </div>
   </div>
+</div>
 
-  <!-- ── MAIN LAYOUT ───────────────────────────────────────── -->
-  <div class="app-body">
+<!-- ── MAIN LAYOUT ─────────────────────────────────────────── -->
+<div class="app-body">
 
-    <!-- LEFT PANEL -->
-    <aside class="left-panel">
-      <!-- Reactor arc animation -->
-      <div class="reactor-wrap">
-        <svg class="reactor-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <!-- Outer ring with gap -->
-          <g class="ring ring-1">
-            <circle cx="100" cy="100" r="88" class="arc-track"/>
-            <path d="M 100 12 A 88 88 0 1 1 99.99 12" class="arc-active" stroke-dasharray="490 60"/>
-            <circle cx="188" cy="100" r="5" class="arc-tip"/>
-          </g>
-          <!-- Middle ring -->
-          <g class="ring ring-2">
-            <circle cx="100" cy="100" r="70" class="arc-track"/>
-            <path d="M 100 30 A 70 70 0 1 0 99.99 30" class="arc-active arc-mid" stroke-dasharray="320 120"/>
-            <circle cx="30" cy="100" r="4" class="arc-tip arc-tip-2"/>
-          </g>
-          <!-- Inner ring -->
-          <g class="ring ring-3">
-            <circle cx="100" cy="100" r="52" class="arc-track"/>
-            <path d="M 100 48 A 52 52 0 1 1 99.99 48" class="arc-active arc-inner" stroke-dasharray="250 76"/>
-            <circle cx="152" cy="100" r="3" class="arc-tip arc-tip-3"/>
-          </g>
-          <!-- Core -->
-          <circle cx="100" cy="100" r="28" class="core-outer" filter="url(#glow)"/>
-          <circle cx="100" cy="100" r="20" class="core-mid"/>
-          <circle cx="100" cy="100" r="12" class="core-inner" filter="url(#glow)"/>
-          <!-- Cross lines -->
-          <line x1="100" y1="72" x2="100" y2="88" class="core-line"/>
-          <line x1="100" y1="112" x2="100" y2="128" class="core-line"/>
-          <line x1="72" y1="100" x2="88" y2="100" class="core-line"/>
-          <line x1="112" y1="100" x2="128" y2="100" class="core-line"/>
-        </svg>
-        <div class="reactor-label">REACTOR CORE</div>
-        <div class="reactor-value" id="reactor-pct">99.7%</div>
-      </div>
-
-      <!-- Status bars -->
-      <div class="status-bars">
-        <div class="sbar-row">
-          <span class="sbar-label">NEURAL LINK</span>
-          <div class="sbar-track"><div class="sbar-fill" style="width:87%"></div></div>
-          <span class="sbar-val">87%</span>
-        </div>
-        <div class="sbar-row">
-          <span class="sbar-label">LATENCY</span>
-          <div class="sbar-track"><div class="sbar-fill" id="latency-bar" style="width:95%"></div></div>
-          <span class="sbar-val" id="latency-val">12ms</span>
-        </div>
-        <div class="sbar-row">
-          <span class="sbar-label">CONTEXT</span>
-          <div class="sbar-track"><div class="sbar-fill" id="context-bar" style="width:0%"></div></div>
-          <span class="sbar-val" id="context-val">0%</span>
-        </div>
-      </div>
-
-      <!-- Waveform canvas -->
-      <div class="waveform-wrap">
-        <div class="waveform-label">AUDIO INPUT</div>
-        <canvas id="waveform" width="200" height="50"></canvas>
-      </div>
-
-      <!-- Hex grid decoration -->
-      <div class="hex-grid"></div>
-    </aside>
-
-    <!-- CENTER PANEL (chat) -->
-    <main class="center-panel">
-      <div class="chat-header">
-        <div class="ch-line"></div>
-        <span class="ch-title">INTERFACE PROTOCOL  ·  SECURE CHANNEL</span>
-        <div class="ch-line"></div>
-      </div>
-
-      <div class="messages-wrap" id="messages">
-        <!-- Welcome -->
-        <div class="msg jarvis-msg">
-          <div class="msg-meta">
-            <span class="msg-from">J.A.R.V.I.S.</span>
-            <span class="msg-time" id="welcome-time"></span>
-          </div>
-          <div class="msg-body">
-            All systems nominal. Anthropic neural interface initialised. How may I assist you today, sir?
-          </div>
-        </div>
-      </div>
-
-      <!-- Typing indicator -->
-      <div class="typing-row" id="typing-row" style="display:none">
-        <span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span>
-        <span class="t-label">PROCESSING</span>
-      </div>
-    </main>
-
-    <!-- RIGHT PANEL -->
-    <aside class="right-panel">
-
-      <!-- Model selector -->
-      <div class="rp-section">
-        <div class="rp-title">NEURAL CORE</div>
-        <div class="model-list">
-          <button class="model-opt active" data-model="claude-opus-4-7">
-            <span class="mo-dot"></span>
-            <div class="mo-info">
-              <span class="mo-name">OPUS 4.7</span>
-              <span class="mo-tag">MAXIMUM INTELLIGENCE</span>
-            </div>
-          </button>
-          <button class="model-opt" data-model="claude-sonnet-4-6">
-            <span class="mo-dot"></span>
-            <div class="mo-info">
-              <span class="mo-name">SONNET 4.6</span>
-              <span class="mo-tag">BALANCED PERFORMANCE</span>
-            </div>
-          </button>
-          <button class="model-opt" data-model="claude-haiku-4-5">
-            <span class="mo-dot"></span>
-            <div class="mo-info">
-              <span class="mo-name">HAIKU 4.5</span>
-              <span class="mo-tag">RAPID RESPONSE</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <!-- Session stats -->
-      <div class="rp-section">
-        <div class="rp-title">SESSION DATA</div>
-        <div class="stat-grid">
-          <div class="stat-cell">
-            <span class="sc-val" id="stat-msgs">0</span>
-            <span class="sc-lbl">EXCHANGES</span>
-          </div>
-          <div class="stat-cell">
-            <span class="sc-val" id="stat-in">0</span>
-            <span class="sc-lbl">TOKENS IN</span>
-          </div>
-          <div class="stat-cell">
-            <span class="sc-val" id="stat-out">0</span>
-            <span class="sc-lbl">TOKENS OUT</span>
-          </div>
-          <div class="stat-cell">
-            <span class="sc-val" id="stat-cache">0</span>
-            <span class="sc-lbl">CACHED</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div class="rp-section">
-        <div class="rp-title">CONTROLS</div>
-        <div class="ctrl-group">
-          <button class="ctrl-btn active" id="tts-btn">
-            <span id="tts-icon">🔊</span> VOICE OUTPUT: ON
-          </button>
-          <button class="ctrl-btn" id="clear-btn">⟳ CLEAR SESSION</button>
-          <button class="ctrl-btn" id="export-btn">↓ EXPORT LOG</button>
-        </div>
-      </div>
-
-      <!-- API Key -->
-      <div class="rp-section">
-        <div class="rp-title">API AUTHENTICATION</div>
-        <div class="api-row">
-          <input type="password" id="api-input" class="api-input" placeholder="sk-ant-..." />
-          <button id="api-save-btn" class="api-save-btn">SET</button>
-        </div>
-        <div class="api-status" id="api-status">NOT CONFIGURED</div>
-      </div>
-
-    </aside>
-  </div>
-
-  <!-- ── INPUT BAR ──────────────────────────────────────────── -->
-  <div class="input-bar">
-    <div class="input-inner">
-      <button class="mic-btn" id="mic-btn" title="Voice Input (Ctrl+M)">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-          <line x1="12" y1="19" x2="12" y2="23"/>
-          <line x1="8" y1="23" x2="16" y2="23"/>
-        </svg>
-      </button>
-      <div class="textarea-wrap">
-        <textarea id="msg-input" placeholder="Enter command or query, sir…" rows="1"></textarea>
-      </div>
-      <button class="send-btn" id="send-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-        SEND
-      </button>
+  <!-- LEFT PANEL -->
+  <aside class="left-panel">
+    <div class="reactor-wrap">
+      <svg class="reactor-svg" viewBox="0 0 200 200">
+        <defs>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g class="ring ring-1">
+          <circle cx="100" cy="100" r="88" class="arc-track"/>
+          <path d="M100,12 A88,88 0 1 1 99.99,12" class="arc-active" stroke-dasharray="490 60"/>
+          <circle cx="188" cy="100" r="5" class="arc-tip"/>
+        </g>
+        <g class="ring ring-2">
+          <circle cx="100" cy="100" r="70" class="arc-track"/>
+          <path d="M100,30 A70,70 0 1 0 99.99,30" class="arc-active arc-mid" stroke-dasharray="320 120"/>
+          <circle cx="30" cy="100" r="4" class="arc-tip arc-tip-2"/>
+        </g>
+        <g class="ring ring-3">
+          <circle cx="100" cy="100" r="52" class="arc-track"/>
+          <path d="M100,48 A52,52 0 1 1 99.99,48" class="arc-active arc-inner" stroke-dasharray="250 76"/>
+          <circle cx="152" cy="100" r="3" class="arc-tip arc-tip-3"/>
+        </g>
+        <circle cx="100" cy="100" r="28" class="core-outer" filter="url(#glow)"/>
+        <circle cx="100" cy="100" r="20" class="core-mid"/>
+        <circle cx="100" cy="100" r="12" class="core-inner" filter="url(#glow)"/>
+        <line x1="100" y1="72"  x2="100" y2="88"  class="core-line"/>
+        <line x1="100" y1="112" x2="100" y2="128" class="core-line"/>
+        <line x1="72"  y1="100" x2="88"  y2="100" class="core-line"/>
+        <line x1="112" y1="100" x2="128" y2="100" class="core-line"/>
+      </svg>
+      <div class="reactor-label">REACTOR CORE</div>
+      <div class="reactor-value" id="reactor-pct">99.7%</div>
     </div>
-    <div class="input-hint">ENTER to send · SHIFT+ENTER new line · CTRL+M voice input</div>
-  </div>
 
-  <!-- API Key required modal -->
-  <div class="modal-bg" id="modal-bg" style="display:none">
-    <div class="modal-box">
-      <div class="modal-title">⚠ AUTHENTICATION REQUIRED</div>
-      <p class="modal-body">Enter your Anthropic API key to initialise the neural interface.</p>
-      <input type="password" id="modal-key-input" class="api-input" placeholder="sk-ant-api03-..." />
-      <button id="modal-save-btn" class="send-btn" style="width:100%;justify-content:center;margin-top:12px">
-        AUTHENTICATE
-      </button>
+    <div class="status-bars">
+      <div class="sbar-row">
+        <span class="sbar-label">NEURAL LINK</span>
+        <div class="sbar-track"><div class="sbar-fill" style="width:87%"></div></div>
+        <span class="sbar-val">87%</span>
+      </div>
+      <div class="sbar-row">
+        <span class="sbar-label">LATENCY</span>
+        <div class="sbar-track"><div class="sbar-fill" id="latency-bar" style="width:95%"></div></div>
+        <span class="sbar-val" id="latency-val">--ms</span>
+      </div>
+      <div class="sbar-row">
+        <span class="sbar-label">CONTEXT</span>
+        <div class="sbar-track"><div class="sbar-fill" id="context-bar" style="width:0%"></div></div>
+        <span class="sbar-val" id="context-val">0%</span>
+      </div>
     </div>
-  </div>
 
-  <script src="renderer.js"></script>
+    <div class="waveform-wrap">
+      <div class="waveform-label">AUDIO INPUT</div>
+      <canvas id="waveform" width="200" height="50"></canvas>
+    </div>
+
+    <div class="hex-grid"></div>
+  </aside>
+
+  <!-- CENTER PANEL -->
+  <main class="center-panel">
+    <div class="chat-header">
+      <div class="ch-line"></div>
+      <span class="ch-title">INTERFACE PROTOCOL  ·  SECURE CHANNEL</span>
+      <div class="ch-line"></div>
+    </div>
+
+    <div class="messages-wrap" id="messages">
+      <div class="msg jarvis-msg">
+        <div class="msg-meta">
+          <span class="msg-from">J.A.R.V.I.S.</span>
+          <span class="msg-time" id="welcome-time"></span>
+        </div>
+        <div class="msg-body">All systems nominal. Neural interface initialised. How may I assist you today, sir?</div>
+      </div>
+    </div>
+
+    <div class="typing-row" id="typing-row" style="display:none">
+      <span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span>
+      <span class="t-label" id="typing-label">PROCESSING</span>
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside class="right-panel">
+
+    <!-- Claude models -->
+    <div class="rp-section">
+      <div class="rp-title">CLAUDE MODELS</div>
+      <div class="model-list" id="claude-model-list">
+        <button class="model-opt active" data-model="claude-opus-4-7" data-provider="claude">
+          <span class="mo-dot"></span>
+          <div class="mo-info"><span class="mo-name">OPUS 4.7</span><span class="mo-tag">MAXIMUM INTELLIGENCE</span></div>
+        </button>
+        <button class="model-opt" data-model="claude-sonnet-4-6" data-provider="claude">
+          <span class="mo-dot"></span>
+          <div class="mo-info"><span class="mo-name">SONNET 4.6</span><span class="mo-tag">BALANCED PERFORMANCE</span></div>
+        </button>
+        <button class="model-opt" data-model="claude-haiku-4-5" data-provider="claude">
+          <span class="mo-dot"></span>
+          <div class="mo-info"><span class="mo-name">HAIKU 4.5</span><span class="mo-tag">RAPID RESPONSE</span></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Local models -->
+    <div class="rp-section">
+      <div class="rp-title-row">
+        <div class="rp-title" style="border:none;padding:0;margin:0">LOCAL MODELS</div>
+        <button class="scan-btn" id="scan-btn">⟳ SCAN</button>
+      </div>
+      <div class="conn-row">
+        <div class="conn-item" id="ollama-conn">
+          <span class="conn-dot" id="ollama-dot"></span>OLLAMA
+        </div>
+        <div class="conn-item" id="lmstudio-conn">
+          <span class="conn-dot" id="lmstudio-dot"></span>LM STUDIO
+        </div>
+      </div>
+      <div class="local-list" id="local-list">
+        <div class="no-local">No local models detected.<br>Start Ollama or LM Studio, then scan.</div>
+      </div>
+    </div>
+
+    <!-- Session stats -->
+    <div class="rp-section">
+      <div class="rp-title">SESSION DATA</div>
+      <div class="stat-grid">
+        <div class="stat-cell"><span class="sc-val" id="stat-msgs">0</span><span class="sc-lbl">EXCHANGES</span></div>
+        <div class="stat-cell"><span class="sc-val" id="stat-in">0</span><span class="sc-lbl">TOKENS IN</span></div>
+        <div class="stat-cell"><span class="sc-val" id="stat-out">0</span><span class="sc-lbl">TOKENS OUT</span></div>
+        <div class="stat-cell"><span class="sc-val" id="stat-cache">0</span><span class="sc-lbl">CACHED</span></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="rp-section">
+      <div class="rp-title">CONTROLS</div>
+      <div class="ctrl-group">
+        <button class="ctrl-btn active" id="tts-btn">🔊 VOICE OUTPUT: ON</button>
+        <button class="ctrl-btn" id="clear-btn">⟳ CLEAR SESSION</button>
+        <button class="ctrl-btn" id="export-btn">↓ EXPORT LOG</button>
+      </div>
+    </div>
+
+    <!-- API key -->
+    <div class="rp-section">
+      <div class="rp-title">API AUTHENTICATION</div>
+      <div class="api-row">
+        <input type="password" id="api-input" class="api-input" placeholder="sk-ant-..." />
+        <button id="api-save-btn" class="api-save-btn">SET</button>
+      </div>
+      <div class="api-status" id="api-status">NOT CONFIGURED</div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- ── INPUT BAR ───────────────────────────────────────────── -->
+<div class="input-bar">
+  <div class="input-inner">
+    <button class="mic-btn" id="mic-btn" title="Voice Input (Ctrl+M)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8"  y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+    <div class="textarea-wrap">
+      <textarea id="msg-input" placeholder="Enter command or query, sir…" rows="1"></textarea>
+    </div>
+    <button class="send-btn" id="send-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+      SEND
+    </button>
+  </div>
+  <div class="input-hint">ENTER to send · SHIFT+ENTER new line · CTRL+M voice input</div>
+</div>
+
+<!-- API key modal -->
+<div class="modal-bg" id="modal-bg" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">⚠ AUTHENTICATION REQUIRED</div>
+    <p class="modal-body">Enter your Anthropic API key to use Claude models.<br>Local models (Ollama, LM Studio) work without a key.</p>
+    <input type="password" id="modal-key" class="api-input" style="width:100%;margin-top:12px" placeholder="sk-ant-api03-..." />
+    <button id="modal-save-btn" class="send-btn" style="width:100%;justify-content:center;margin-top:10px">AUTHENTICATE</button>
+    <button id="modal-skip-btn" class="ctrl-btn" style="width:100%;text-align:center;margin-top:6px">SKIP — USE LOCAL MODELS ONLY</button>
+  </div>
+</div>
+
+<script src="renderer.js"></script>
 </body>
 </html>

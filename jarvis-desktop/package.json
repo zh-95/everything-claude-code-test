@@ -1,7 +1,7 @@
 {
   "name": "jarvis-desktop",
-  "version": "1.0.0",
-  "description": "J.A.R.V.I.S. - AI Desktop Interface powered by Claude",
+  "version": "2.0.0",
+  "description": "J.A.R.V.I.S. — AI desktop interface powered by Claude and local models",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

@@ -1,7 +1,8 @@
 /* J.A.R.V.I.S. Renderer Process */
 
 // ── STATE ───────────────────────────────────────────────────
-let currentModel  = 'claude-opus-4-7';
+let currentModel    = 'claude-opus-4-7';
+let currentProvider = 'claude';
 let conversationHistory = [];
 let isStreaming   = false;
 let ttsEnabled    = true;
@@ -13,30 +14,36 @@ let synth         = window.speechSynthesis;
 let micActive     = false;
 
 // ── DOM REFS ────────────────────────────────────────────────
-const $messages   = document.getElementById('messages');
-const $msgInput   = document.getElementById('msg-input');
-const $sendBtn    = document.getElementById('send-btn');
-const $micBtn     = document.getElementById('mic-btn');
-const $typingRow  = document.getElementById('typing-row');
-const $apiInput   = document.getElementById('api-input');
-const $apiSaveBtn = document.getElementById('api-save-btn');
-const $apiStatus  = document.getElementById('api-status');
-const $ttsBtn     = document.getElementById('tts-btn');
-const $clearBtn   = document.getElementById('clear-btn');
-const $exportBtn  = document.getElementById('export-btn');
-const $modalBg    = document.getElementById('modal-bg');
-const $modalKey   = document.getElementById('modal-key-input');
-const $modalSave  = document.getElementById('modal-save-btn');
-const $contextBar = document.getElementById('context-bar');
-const $contextVal = document.getElementById('context-val');
-const $latencyBar = document.getElementById('latency-bar');
-const $latencyVal = document.getElementById('latency-val');
-const $waveCanvas = document.getElementById('waveform');
-const wCtx        = $waveCanvas.getContext('2d');
-const $clock      = document.getElementById('clock');
-const $dateline   = document.getElementById('dateline');
-const $modelBadge = document.getElementById('active-model-badge');
-const $welcomeTime= document.getElementById('welcome-time');
+const $messages      = document.getElementById('messages');
+const $msgInput      = document.getElementById('msg-input');
+const $sendBtn       = document.getElementById('send-btn');
+const $micBtn        = document.getElementById('mic-btn');
+const $typingRow     = document.getElementById('typing-row');
+const $typingLabel   = document.getElementById('typing-label');
+const $apiInput      = document.getElementById('api-input');
+const $apiSaveBtn    = document.getElementById('api-save-btn');
+const $apiStatus     = document.getElementById('api-status');
+const $ttsBtn        = document.getElementById('tts-btn');
+const $clearBtn      = document.getElementById('clear-btn');
+const $exportBtn     = document.getElementById('export-btn');
+const $modalBg       = document.getElementById('modal-bg');
+const $modalKey      = document.getElementById('modal-key');
+const $modalSave     = document.getElementById('modal-save-btn');
+const $modalSkip     = document.getElementById('modal-skip-btn');
+const $contextBar    = document.getElementById('context-bar');
+const $contextVal    = document.getElementById('context-val');
+const $latencyBar    = document.getElementById('latency-bar');
+const $latencyVal    = document.getElementById('latency-val');
+const $waveCanvas    = document.getElementById('waveform');
+const wCtx           = $waveCanvas.getContext('2d');
+const $clock         = document.getElementById('clock');
+const $dateline      = document.getElementById('dateline');
+const $modelBadge    = document.getElementById('model-badge');
+const $providerBadge = document.getElementById('provider-badge');
+const $scanBtn       = document.getElementById('scan-btn');
+const $localList     = document.getElementById('local-list');
+const $ollamaDot     = document.getElementById('ollama-dot');
+const $lmstudioDot   = document.getElementById('lmstudio-dot');
 
 // ── INIT ────────────────────────────────────────────────────
 (async function init() {
@@ -44,12 +51,12 @@ const $welcomeTime= document.getElementById('welcome-time');
   setInterval(updateClock, 1000);
   animateWaveform();
   setupVoice();
-  setupStreamListener();
   bindEvents();
   await checkApiKey();
-  $welcomeTime.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
-  document.querySelector('.jarvis-msg').querySelector('.msg-time').textContent =
+  document.querySelector('.jarvis-msg .msg-time').textContent =
     new Date().toLocaleTimeString('en-US', { hour12: false });
+  // Auto-scan local models on startup (non-blocking)
+  scanLocalModels();
 })();
 
 // ── CLOCK ───────────────────────────────────────────────────
@@ -84,6 +91,81 @@ async function saveApiKey(key) {
   speak('API key configured. All systems online.');
 }
 
+// ── MODEL SELECTION ─────────────────────────────────────────
+function selectModel(modelId, provider) {
+  currentModel    = modelId;
+  currentProvider = provider;
+
+  // Deactivate all model buttons
+  document.querySelectorAll('.model-opt, .local-model-opt').forEach(b => b.classList.remove('active'));
+
+  // Activate the matching button
+  const btn = document.querySelector(`[data-model="${CSS.escape(modelId)}"]`);
+  if (btn) btn.classList.add('active');
+
+  // Update title bar badges
+  const claudeLabels = {
+    'claude-opus-4-7':   'OPUS 4.7',
+    'claude-sonnet-4-6': 'SONNET 4.6',
+    'claude-haiku-4-5':  'HAIKU 4.5',
+  };
+
+  $modelBadge.textContent = claudeLabels[modelId] || modelId.split(':')[0].toUpperCase();
+
+  const providerLabels = { claude: 'CLAUDE', ollama: 'OLLAMA', lmstudio: 'LM STUDIO' };
+  $providerBadge.textContent = providerLabels[provider] || provider.toUpperCase();
+  $providerBadge.className = 'provider-badge ' + (provider !== 'claude' ? provider : '');
+}
+
+// ── LOCAL MODEL SCAN ────────────────────────────────────────
+async function scanLocalModels() {
+  $scanBtn.classList.add('scanning');
+  $ollamaDot.className  = 'conn-dot checking';
+  $lmstudioDot.className = 'conn-dot checking';
+
+  const models = await window.jarvis.getLocalModels();
+
+  const ollamaModels   = models.filter(m => m.provider === 'ollama');
+  const lmstudioModels = models.filter(m => m.provider === 'lmstudio');
+
+  $ollamaDot.className   = ollamaModels.length   ? 'conn-dot online' : 'conn-dot offline';
+  $lmstudioDot.className = lmstudioModels.length ? 'conn-dot online' : 'conn-dot offline';
+
+  $localList.innerHTML = '';
+
+  if (!models.length) {
+    $localList.innerHTML = '<div class="no-local">No local models detected.<br>Start Ollama or LM Studio, then scan.</div>';
+  } else {
+    for (const m of models) {
+      const btn = document.createElement('button');
+      btn.className = `local-model-opt ${m.provider}`;
+      btn.dataset.model    = m.id;
+      btn.dataset.provider = m.provider;
+
+      const tag = m.provider === 'ollama' ? 'OLLAMA' : 'LM STUDIO';
+      const size = m.size ? `· ${formatBytes(m.size)}` : '';
+
+      btn.innerHTML = `
+        <span class="lmo-dot"></span>
+        <div class="mo-info">
+          <span class="mo-name">${escapeHtml(m.name.toUpperCase())}</span>
+          <span class="mo-tag">${tag} ${size}</span>
+        </div>`;
+
+      btn.onclick = () => selectModel(m.id, m.provider);
+      $localList.appendChild(btn);
+    }
+  }
+
+  $scanBtn.classList.remove('scanning');
+}
+
+function formatBytes(bytes) {
+  if (bytes >= 1e9) return (bytes / 1e9).toFixed(1) + ' GB';
+  if (bytes >= 1e6) return (bytes / 1e6).toFixed(0) + ' MB';
+  return bytes + ' B';
+}
+
 // ── EVENTS ──────────────────────────────────────────────────
 function bindEvents() {
   // Window controls
@@ -91,7 +173,7 @@ function bindEvents() {
   document.getElementById('btn-max').onclick   = () => window.jarvis.maximize();
   document.getElementById('btn-close').onclick = () => window.jarvis.close();
 
-  // Send message
+  // Send
   $sendBtn.onclick = sendMessage;
   $msgInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -104,20 +186,13 @@ function bindEvents() {
     if (e.ctrlKey && e.key === 'm') { e.preventDefault(); toggleMic(); }
   });
 
-  // Model selector
+  // Claude model buttons
   document.querySelectorAll('.model-opt').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.model-opt').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentModel = btn.dataset.model;
-      const labels = {
-        'claude-opus-4-7':   'OPUS 4.7',
-        'claude-sonnet-4-6': 'SONNET 4.6',
-        'claude-haiku-4-5':  'HAIKU 4.5',
-      };
-      $modelBadge.textContent = labels[currentModel] || currentModel.toUpperCase();
-    };
+    btn.onclick = () => selectModel(btn.dataset.model, btn.dataset.provider || 'claude');
   });
+
+  // Scan button
+  $scanBtn.onclick = scanLocalModels;
 
   // TTS toggle
   $ttsBtn.onclick = () => {
@@ -127,7 +202,7 @@ function bindEvents() {
     if (!ttsEnabled) synth.cancel();
   };
 
-  // Clear
+  // Clear session
   $clearBtn.onclick = () => {
     conversationHistory = [];
     $messages.innerHTML = `
@@ -146,11 +221,16 @@ function bindEvents() {
   // Export
   $exportBtn.onclick = exportLog;
 
-  // API key
+  // API key — sidebar
   $apiSaveBtn.onclick = () => saveApiKey($apiInput.value);
   $apiInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveApiKey($apiInput.value); });
+
+  // API key — modal
   $modalSave.onclick = () => saveApiKey($modalKey.value);
   $modalKey.addEventListener('keydown', e => { if (e.key === 'Enter') saveApiKey($modalKey.value); });
+
+  // Skip modal — use local models only
+  $modalSkip.onclick = () => { $modalBg.style.display = 'none'; };
 }
 
 function autoResize() {
@@ -163,27 +243,26 @@ async function sendMessage() {
   const text = $msgInput.value.trim();
   if (!text || isStreaming) return;
 
-  // Check API key first
-  const hasKey = await window.jarvis.hasApiKey();
-  if (!hasKey) { $modalBg.style.display = 'flex'; return; }
+  // Claude models require an API key; local models do not
+  if (currentProvider === 'claude') {
+    const hasKey = await window.jarvis.hasApiKey();
+    if (!hasKey) { $modalBg.style.display = 'flex'; return; }
+  }
 
   $msgInput.value = '';
   $msgInput.style.height = 'auto';
 
-  // Add user message to UI
   appendMessage('user', text);
-
-  // Add to history
   conversationHistory.push({ role: 'user', content: text });
 
-  // Update context usage (rough estimate: 4 chars ≈ 1 token)
   const totalChars = conversationHistory.reduce((s, m) =>
     s + (typeof m.content === 'string' ? m.content.length : 0), 0);
   updateContext(Math.min(Math.round(totalChars / 40000 * 100), 95));
 
-  // Start streaming
   isStreaming = true;
   $sendBtn.disabled = true;
+  $typingLabel.textContent = currentProvider === 'ollama' ? 'OLLAMA' :
+                             currentProvider === 'lmstudio' ? 'LM STUDIO' : 'PROCESSING';
   $typingRow.style.display = 'flex';
 
   const startTime = Date.now();
@@ -196,14 +275,14 @@ async function sendMessage() {
     });
 
     const result = await window.jarvis.sendMessage({
-      content: text,
-      model: currentModel,
-      history: conversationHistory.slice(0, -1), // exclude last user msg (already in content)
+      content:  text,
+      model:    currentModel,
+      provider: currentProvider,
+      history:  conversationHistory.slice(0, -1),
     });
 
     finalizeStreamingMessage(streamMsgEl);
 
-    // Update stats
     if (result?.usage) {
       stats.tokensIn  += result.usage.input_tokens  || 0;
       stats.tokensOut += result.usage.output_tokens || 0;
@@ -212,24 +291,19 @@ async function sendMessage() {
     stats.msgs++;
     updateStats();
 
-    // Latency
     const ms = Date.now() - startTime;
     $latencyVal.textContent = ms + 'ms';
     $latencyBar.style.width = Math.max(10, Math.min(100, 100 - ms / 50)) + '%';
 
-    // Add assistant response to history
     const responseText = streamMsgEl.querySelector('.msg-body').textContent;
     conversationHistory.push({ role: 'assistant', content: responseText });
 
-    // TTS
     if (ttsEnabled) speak(responseText);
 
   } catch (err) {
     finalizeStreamingMessage(streamMsgEl, true);
     streamMsgEl.querySelector('.msg-body').textContent = `⚠ ERROR: ${err.message}`;
-    if (err.message.includes('API key')) {
-      $modalBg.style.display = 'flex';
-    }
+    if (err.message.includes('API key')) $modalBg.style.display = 'flex';
   } finally {
     isStreaming = false;
     $sendBtn.disabled = false;
@@ -255,6 +329,7 @@ function appendMessage(role, content) {
 }
 
 function createStreamingMessage() {
+  streamBuffer = '';
   const el = document.createElement('div');
   el.className = 'msg jarvis-msg';
   el.innerHTML = `
@@ -273,14 +348,12 @@ let streamBuffer = '';
 function appendToStreamingMessage(el, chunk) {
   streamBuffer += chunk;
   const body = el.querySelector('.msg-body');
-  // Remove cursor, set text, re-add cursor
   body.innerHTML = escapeHtml(streamBuffer) + '<span class="streaming-cursor"></span>';
   $messages.scrollTop = $messages.scrollHeight;
 }
 
 function finalizeStreamingMessage(el, isError = false) {
   const body = el.querySelector('.msg-body');
-  // Remove cursor span and set final text
   body.innerHTML = escapeHtml(streamBuffer);
   streamBuffer = '';
   if (isError) body.style.color = '#ff4444';
@@ -318,11 +391,6 @@ function formatNum(n) {
   return String(n);
 }
 
-// ── STREAM LISTENER ─────────────────────────────────────────
-function setupStreamListener() {
-  // Listeners are set up per-request in sendMessage()
-}
-
 // ── VOICE INPUT ─────────────────────────────────────────────
 function setupVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -335,7 +403,7 @@ function setupVoice() {
     const transcript = e.results[0][0].transcript;
     $msgInput.value = transcript;
     autoResize();
-    toggleMic(); // stop
+    toggleMic();
     sendMessage();
   };
   recognition.onerror = () => toggleMic();
@@ -361,15 +429,12 @@ function toggleMic() {
 function speak(text) {
   if (!ttsEnabled || !synth) return;
   synth.cancel();
-  // Strip HTML entities and tags
   const plain = text.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-  // Limit length for TTS
   const excerpt = plain.length > 400 ? plain.substring(0, 400) + '...' : plain;
   const utt = new SpeechSynthesisUtterance(excerpt);
   utt.rate  = 1.0;
   utt.pitch = 0.85;
   utt.volume = 0.9;
-  // Try to get a British male voice
   const voices = synth.getVoices();
   const brit = voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('male'))
             || voices.find(v => v.lang === 'en-GB')
