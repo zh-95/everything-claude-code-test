@@ -1,0 +1,16 @@
+{
+  "name": "jarvis-desktop",
+  "version": "1.0.0",
+  "description": "J.A.R.V.I.S. - AI Desktop Interface powered by Claude",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "ELECTRON_ENABLE_LOGGING=1 electron ."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.3"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0"
+  }
+}
