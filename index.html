@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e1a">
+<title>🥇 Gold Bot</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e1a;--bg2:#111827;--bg3:#1a2235;--border:#1e2d45;
+  --gold:#f5c518;--green:#00c853;--red:#ff3d57;--blue:#4da6ff;
+  --text:#e2e8f0;--muted:#64748b;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100dvh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+
+.header{background:linear-gradient(135deg,#0d1526,#111f38);border-bottom:1px solid var(--border);padding:10px 14px 8px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo{font-size:22px}
+.header-title{font-size:14px;font-weight:700;color:var(--gold);letter-spacing:.5px}
+.header-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.source-badge{font-size:9px;padding:2px 7px;border-radius:99px;border:1px solid var(--border);color:var(--muted);background:var(--bg3)}
+
+.price-bar{background:var(--bg2);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.price-main{font-size:28px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.price-change{font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px}
+.price-change.up{background:rgba(0,200,83,.15);color:var(--green)}
+.price-change.down{background:rgba(255,61,87,.15);color:var(--red)}
+.price-change.flat{background:rgba(100,116,139,.15);color:var(--muted)}
+.price-sub{font-size:10px;color:var(--muted);margin-top:2px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border)}
+.stat-card{padding:10px 8px;text-align:center;border-right:1px solid var(--border)}
+.stat-card:last-child{border-right:none}
+.stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.stat-value{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat-value.pos{color:var(--green)}.stat-value.neg{color:var(--red)}
+.stat-value.gold{color:var(--gold)}.stat-value.blue{color:var(--blue)}
+
+.chart-section{background:var(--bg2);border-bottom:1px solid var(--border)}
+.chart-header{padding:8px 14px 4px;display:flex;align-items:center;justify-content:space-between}
+.chart-title{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+#chart{height:200px}
+
+.signal-banner{margin:10px 14px;padding:10px 14px;border-radius:10px;display:flex;align-items:center;gap:12px;font-weight:600;border:1px solid transparent;transition:all .3s}
+.signal-banner.HOLD{background:rgba(100,116,139,.08);border-color:rgba(100,116,139,.2);color:var(--muted)}
+.signal-banner.BUY{background:rgba(0,200,83,.08);border-color:rgba(0,200,83,.3);color:var(--green)}
+.signal-banner.SELL{background:rgba(255,61,87,.08);border-color:rgba(255,61,87,.3);color:var(--red)}
+.signal-banner.CLOSE{background:rgba(77,166,255,.08);border-color:rgba(77,166,255,.3);color:var(--blue)}
+.signal-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;animation:pdot 1.2s infinite}
+.HOLD .signal-dot{background:var(--muted);animation:none}
+.BUY .signal-dot{background:var(--green)}.SELL .signal-dot{background:var(--red)}.CLOSE .signal-dot{background:var(--blue)}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+.signal-text{font-size:13px;flex:1}.signal-ind{font-size:10px;color:var(--muted);font-weight:400;margin-top:2px}
+
+.section{margin:0 14px 10px}
+.section-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+.position-card{padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg3)}
+.pos-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pos-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px}
+.pos-badge.long{background:rgba(0,200,83,.2);color:var(--green)}
+.pos-badge.short{background:rgba(255,61,87,.2);color:var(--red)}
+.pos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pos-item-label{font-size:9px;color:var(--muted)}
+.pos-item-value{font-size:12px;font-weight:600}
+
+.ind-row{display:flex;gap:6px;flex-wrap:wrap}
+.ind-pill{background:var(--bg3);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:10px}
+.ind-pill span{color:var(--muted)}
+.ind-pill b.pos{color:var(--green)}.ind-pill b.neg{color:var(--red)}.ind-pill b.gold{color:var(--gold)}.ind-pill b.blue{color:var(--blue)}
+
+.uptime-row{text-align:center;font-size:10px;color:var(--muted);padding:6px 14px}
+
+.trade-list{display:flex;flex-direction:column;gap:4px}
+.trade-item{background:var(--bg3);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;border:1px solid var(--border)}
+.trade-icon{font-size:14px}
+.trade-info{flex:1;min-width:0}
+.trade-main{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trade-sub{font-size:9px;color:var(--muted);margin-top:1px}
+.trade-pnl{font-size:12px;font-weight:700;flex-shrink:0}
+.trade-pnl.pos{color:var(--green)}.trade-pnl.neg{color:var(--red)}
+
+.log-list{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto}
+.log-item{font-size:11px;padding:4px 8px;border-radius:6px;background:var(--bg3);border-left:2px solid var(--border);font-family:'Menlo','Courier New',monospace;line-height:1.4}
+.log-time{font-size:9px;color:var(--muted);margin-bottom:1px}
+
+.controls{display:flex;gap:8px;padding:14px;border-top:1px solid var(--border);background:var(--bg2);position:sticky;bottom:0}
+.btn{flex:1;padding:11px;border-radius:10px;border:none;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.btn:active{transform:scale(.96)}
+.btn-pause{background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);color:var(--gold)}
+.btn-reset{background:rgba(255,61,87,.1);border:1px solid rgba(255,61,87,.3);color:var(--red)}
+
+@keyframes fg{0%,100%{background:transparent}50%{background:rgba(0,200,83,.15)}}
+@keyframes fr{0%,100%{background:transparent}50%{background:rgba(255,61,87,.15)}}
+.flash-green{animation:fg .5s}.flash-red{animation:fr .5s}
+.spacer{height:20px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">🥇</div>
+    <div>
+      <div class="header-title">GOLD BOT</div>
+      <div class="header-sub">XAU/EUR · Micro-trading 5s · Simulazione</div>
+    </div>
+  </div>
+  <div id="sourceBadge" class="source-badge">simulazione</div>
+</div>
+
+<div class="price-bar">
+  <div>
+    <div class="price-main" id="priceMain">€2130.00</div>
+    <div class="price-sub">€ per oncia troy</div>
+  </div>
+  <div>
+    <div class="price-change flat" id="priceChange">0.000%</div>
+    <div class="price-sub" style="text-align:right;margin-top:4px" id="priceTime">–</div>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value gold" id="statBalance">€50.00</div></div>
+  <div class="stat-card"><div class="stat-label">P&amp;L Totale</div><div class="stat-value" id="statPnL">€0.00</div></div>
+  <div class="stat-card"><div class="stat-label">Equity</div><div class="stat-value blue" id="statEquity">€50.00</div></div>
+  <div class="stat-card"><div class="stat-label">Win rate</div><div class="stat-value" id="statWin">–</div></div>
+</div>
+
+<div class="chart-section">
+  <div class="chart-header">
+    <span class="chart-title">XAU/EUR — Live</span>
+    <span style="font-size:10px;color:var(--muted)" id="chartMeta">–</span>
+  </div>
+  <div id="chart"></div>
+</div>
+
+<div class="signal-banner HOLD" id="signalBanner">
+  <div class="signal-dot"></div>
+  <div>
+    <div class="signal-text" id="signalText">Avvio analisi mercato…</div>
+    <div class="signal-ind" id="signalInd">–</div>
+  </div>
+</div>
+
+<div id="positionSection" class="section" style="display:none">
+  <div class="section-title">Posizione Aperta</div>
+  <div class="position-card">
+    <div class="pos-header">
+      <span class="pos-badge" id="posBadge">LONG</span>
+      <span style="font-size:11px;color:var(--muted)" id="posDuration">–</span>
+    </div>
+    <div class="pos-grid">
+      <div class="pos-item"><div class="pos-item-label">Entry</div><div class="pos-item-value" id="posEntry">–</div></div>
+      <div class="pos-item"><div class="pos-item-label">Lotto</div><div class="pos-item-value" id="posSize">–</div></div>
+      <div class="pos-item"><div class="pos-item-label">P&amp;L non real.</div><div class="pos-item-value" id="posUnrealized">–</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Indicatori Tecnici</div>
+  <div class="ind-row">
+    <div class="ind-pill"><span>EMA5 </span><b id="iEma5">–</b></div>
+    <div class="ind-pill"><span>EMA12 </span><b id="iEma12">–</b></div>
+    <div class="ind-pill"><span>RSI </span><b id="iRsi" class="blue">–</b></div>
+    <div class="ind-pill"><span>MOM </span><b id="iMom">–</b></div>
+    <div class="ind-pill"><span>TICK </span><b id="iTick">–</b></div>
+  </div>
+</div>
+
+<div class="uptime-row">⏱ Uptime: <span id="uptime">0s</span> &nbsp;·&nbsp; Trade chiusi: <span id="tradeCount">0</span></div>
+
+<div class="section" style="margin-top:4px">
+  <div class="section-title">Ultimi Trade</div>
+  <div class="trade-list" id="tradeList"><div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">Nessun trade ancora…</div></div>
+</div>
+
+<div class="section" style="margin-top:4px">
+  <div class="section-title">Log Bot</div>
+  <div class="log-list" id="logList"></div>
+</div>
+
+<div class="spacer"></div>
+
+<div class="controls">
+  <button class="btn btn-pause" id="btnPause" onclick="togglePause()">⏸ Pausa</button>
+  <button class="btn btn-reset" onclick="resetBot()">🔄 Reset (€50)</button>
+</div>
+
+<script>
+// ===== CONSTANTS =====
+const INITIAL_BALANCE  = 50;
+const TRADE_SIZE_PCT   = 0.30;
+const SPREAD_PCT       = 0.0012;
+const STOP_LOSS_PCT    = 0.008;
+const TAKE_PROFIT_PCT  = 0.014;
+const TICK_MS          = 5000;
+
+// ===== STATE =====
+let S = {
+  balance:   INITIAL_BALANCE,
+  position:  null,
+  trades:    [],
+  prices:    [],
+  totalPnL:  0,
+  wins:      0,
+  losses:    0,
+  startTime: Date.now(),
+  logs:      [],
+  paused:    false,
+  trendBias: 0,
+  basePrice: 2130.0,
+  source:    'simulazione',
+  tickCount: 0
+};
+
+// ===== LOG =====
+function log(msg) {
+  S.logs.unshift({ t: Date.now(), msg });
+  if (S.logs.length > 60) S.logs.pop();
+}
+
+// ===== PRICE =====
+async function tryFetchRealPrice() {
+  try {
+    const r = await fetch('https://api.metals.live/v1/spot', { signal: AbortSignal.timeout(3000) });
+    if (r.ok) { const d = await r.json(); if (d.gold) { S.source='metals.live'; return d.gold * 0.925; } }
+  } catch(_){}
+  try {
+    const r = await fetch('https://data-asg.goldprice.org/dbXRates/EUR', { signal: AbortSignal.timeout(3000) });
+    if (r.ok) { const d = await r.json(); if (d.items?.[0]?.xauPrice) { S.source='goldprice.org'; return d.items[0].xauPrice * 31.1035; } }
+  } catch(_){}
+  return null;
+}
+
+function simTick() {
+  const vol  = 0.25 + Math.random() * 0.40;
+  const mean = S.prices.length >= 20
+    ? (S.basePrice - S.prices.slice(-20).reduce((a,b)=>a+b,0)/20) * 0.015
+    : 0;
+  const shock = Math.random() < 0.04 ? (Math.random()-0.5)*3 : 0;
+  const delta = (Math.random()-0.5)*vol*2 + S.trendBias*0.12 + mean + shock;
+  S.trendBias = S.trendBias*0.88 + delta*0.12;
+  if (Math.abs(S.trendBias) > 0.6) S.trendBias *= 0.7;
+  const last = S.prices.length ? S.prices[S.prices.length-1] : S.basePrice;
+  return Math.max(1800, last + delta);
+}
+
+// ===== INDICATORS =====
+function calcInd(prices) {
+  const n = prices.length;
+  if (n < 4) return null;
+  const ema = (arr, p) => {
+    const k = 2/(p+1);
+    let e = arr.slice(0,p).reduce((a,b)=>a+b,0)/p;
+    for (let i=p;i<arr.length;i++) e=arr[i]*k+e*(1-k);
+    return e;
+  };
+  const ema5  = ema(prices, Math.min(5,n));
+  const ema12 = ema(prices, Math.min(12,n));
+  const rp = Math.min(5,n-1);
+  let g=0,l=0;
+  for (let i=n-rp;i<n;i++){const d=prices[i]-prices[i-1]; if(d>0)g+=d;else l-=d;}
+  const rsi = l===0?100:100-100/(1+g/l);
+  const mom = n>=6?(prices[n-1]-prices[n-6])/prices[n-6]*100:0;
+  const tick= n>=2?(prices[n-1]-prices[n-2])/prices[n-2]*100:0;
+  return { ema5, ema12, rsi:+rsi.toFixed(2), mom:+mom.toFixed(4), tick:+tick.toFixed(4), cur:prices[n-1] };
+}
+
+// ===== SIGNAL =====
+function signal(ind, pos) {
+  if (!ind) return 'HOLD';
+  const { ema5,ema12,rsi,mom,tick,cur } = ind;
+  if (pos) {
+    const pct = (cur-pos.entry)/pos.entry;
+    const dir = pos.type==='long'?1:-1;
+    if (pct*dir <= -STOP_LOSS_PCT)  return 'CLOSE_SL';
+    if (pct*dir >= TAKE_PROFIT_PCT) return 'CLOSE_TP';
+    if (pos.type==='long'  && ema5<ema12 && tick<-0.03) return 'CLOSE';
+    if (pos.type==='short' && ema5>ema12 && tick>0.03)  return 'CLOSE';
+    return 'HOLD';
+  }
+  if (ema5>ema12 && mom>0.02  && rsi<72 && tick>0)  return 'BUY';
+  if (ema5<ema12 && mom<-0.02 && rsi>28 && tick<0)  return 'SELL';
+  return 'HOLD';
+}
+
+// ===== EXECUTE =====
+function execute(sig, price) {
+  if (sig==='HOLD' || S.balance<=0.01) return;
+  const half = price*SPREAD_PCT/2;
+  if (sig==='BUY' && !S.position) {
+    const entry=price+half, size=S.balance*TRADE_SIZE_PCT;
+    S.position={type:'long',entry,size,oz:size/entry,openTime:Date.now()};
+    log(`📈 LONG @ €${entry.toFixed(2)} | Lotto: €${size.toFixed(2)}`);
+  } else if (sig==='SELL' && !S.position) {
+    const entry=price-half, size=S.balance*TRADE_SIZE_PCT;
+    S.position={type:'short',entry,size,oz:size/entry,openTime:Date.now()};
+    log(`📉 SHORT @ €${entry.toFixed(2)} | Lotto: €${size.toFixed(2)}`);
+  } else if (sig.startsWith('CLOSE') && S.position) {
+    const pos=S.position;
+    const pnl = pos.type==='long'
+      ? pos.oz*((price-half)-pos.entry)
+      : pos.oz*(pos.entry-(price+half));
+    S.balance+=pnl; S.totalPnL+=pnl;
+    if(pnl>=0)S.wins++;else S.losses++;
+    const reason=sig.replace('CLOSE_','').replace('CLOSE','EXIT');
+    log(`${pnl>=0?'✅':'❌'} ${reason} ${pos.type.toUpperCase()} | P&L: ${pnl>=0?'+':''}€${pnl.toFixed(4)} | Bal: €${S.balance.toFixed(2)}`);
+    S.trades.push({type:pos.type,entry:pos.entry,close:price,size:pos.size,pnl,reason,dur:Date.now()-pos.openTime,time:Date.now()});
+    if(S.trades.length>200)S.trades.shift();
+    S.position=null;
+  }
+}
+
+// ===== CHART =====
+const chartEl = document.getElementById('chart');
+const chart = LightweightCharts.createChart(chartEl,{
+  width:chartEl.offsetWidth, height:200,
+  layout:{background:{color:'#111827'},textColor:'#64748b'},
+  grid:{vertLines:{color:'#1e2d45'},horzLines:{color:'#1e2d45'}},
+  rightPriceScale:{borderColor:'#1e2d45',scaleMargins:{top:.15,bottom:.1}},
+  timeScale:{borderColor:'#1e2d45',timeVisible:true,secondsVisible:true},
+  handleScroll:false,handleScale:false
+});
+const line = chart.addLineSeries({
+  color:'#f5c518',lineWidth:2,
+  priceLineVisible:true,priceLineColor:'#f5c518',priceLineWidth:1,
+  lastValueVisible:true
+});
+window.addEventListener('resize',()=>chart.applyOptions({width:chartEl.offsetWidth}));
+
+// ===== UI =====
+let prevPrice = null;
+
+function updateUI(price, ind, sig) {
+  // Price
+  const pm = document.getElementById('priceMain');
+  pm.textContent = `€${price.toFixed(2)}`;
+  if (prevPrice!==null) {
+    const chg=(price-prevPrice)/prevPrice*100;
+    const ce=document.getElementById('priceChange');
+    if(chg>0){ce.textContent=`+${chg.toFixed(3)}%`;ce.className='price-change up';pm.classList.remove('flash-red');void pm.offsetWidth;pm.classList.add('flash-green');}
+    else if(chg<0){ce.textContent=`${chg.toFixed(3)}%`;ce.className='price-change down';pm.classList.remove('flash-green');void pm.offsetWidth;pm.classList.add('flash-red');}
+    else{ce.textContent='0.000%';ce.className='price-change flat';}
+  }
+  prevPrice=price;
+  document.getElementById('priceTime').textContent=new Date().toLocaleTimeString('it-IT');
+  document.getElementById('sourceBadge').textContent=S.source;
+
+  // Stats
+  let unreal=0;
+  if(S.position){
+    const p=S.position;
+    unreal=p.type==='long'?p.oz*(price-p.entry):p.oz*(p.entry-price);
+  }
+  document.getElementById('statBalance').textContent=`€${S.balance.toFixed(2)}`;
+  const pe=document.getElementById('statPnL');
+  pe.textContent=(S.totalPnL>=0?'+':'')+`€${S.totalPnL.toFixed(3)}`;
+  pe.className=`stat-value ${S.totalPnL>=0?'pos':'neg'}`;
+  document.getElementById('statEquity').textContent=`€${(S.balance+unreal).toFixed(2)}`;
+  const tot=S.wins+S.losses,we=document.getElementById('statWin');
+  if(tot>0){const r=(S.wins/tot*100).toFixed(0);we.textContent=`${r}%`;we.className=`stat-value ${r>=50?'pos':'neg'}`;}
+  else{we.textContent='–';we.className='stat-value';}
+
+  // Chart
+  const now=Math.floor(Date.now()/1000);
+  const data=S.prices.map((p,i)=>({time:now-(S.prices.length-1-i)*5,value:p}));
+  line.setData(data);
+  document.getElementById('chartMeta').textContent=`${S.prices.length} tick`;
+
+  // Signal
+  const SL={HOLD:'In attesa… analisi mercato',BUY:'SEGNALE LONG 📈 — apertura rialzista',SELL:'SEGNALE SHORT 📉 — apertura ribassista',CLOSE:'Chiusura — inversione',CLOSE_TP:'TAKE PROFIT ✅',CLOSE_SL:'STOP LOSS 🛑'};
+  const cls=sig.startsWith('CLOSE')?'CLOSE':sig;
+  document.getElementById('signalBanner').className=`signal-banner ${cls}`;
+  document.getElementById('signalText').textContent=SL[sig]||sig;
+  if(ind){const em=ind.ema5>ind.ema12?'↑ EMA bull':'↓ EMA bear';const rd=ind.rsi>70?'RSI ipercomprato':ind.rsi<30?'RSI ipervenduto':`RSI ${ind.rsi.toFixed(1)}`;document.getElementById('signalInd').textContent=`${em} · ${rd} · mom ${ind.mom>=0?'+':''}${ind.mom.toFixed(3)}%`;}
+
+  // Position
+  const ps=document.getElementById('positionSection');
+  if(!S.position){ps.style.display='none';}
+  else{
+    ps.style.display='block';
+    const b=document.getElementById('posBadge');
+    b.textContent=S.position.type==='long'?'LONG ▲':'SHORT ▼';
+    b.className=`pos-badge ${S.position.type}`;
+    document.getElementById('posDuration').textContent=`${Math.floor((Date.now()-S.position.openTime)/1000)}s fa`;
+    document.getElementById('posEntry').textContent=`€${S.position.entry.toFixed(2)}`;
+    document.getElementById('posSize').textContent=`€${S.position.size.toFixed(2)}`;
+    const ure=document.getElementById('posUnrealized');
+    ure.textContent=(unreal>=0?'+':'')+`€${unreal.toFixed(4)}`;
+    ure.style.color=unreal>=0?'var(--green)':'var(--red)';
+  }
+
+  // Indicators
+  if(ind){
+    const e5=document.getElementById('iEma5'),e12=document.getElementById('iEma12');
+    e5.textContent=ind.ema5.toFixed(2);e12.textContent=ind.ema12.toFixed(2);
+    e5.className=ind.ema5>ind.ema12?'pos':'neg';e12.className=ind.ema5>ind.ema12?'neg':'pos';
+    const ri=document.getElementById('iRsi');ri.textContent=ind.rsi.toFixed(1);ri.className=ind.rsi>70?'neg':ind.rsi<30?'pos':'blue';
+    const mi=document.getElementById('iMom');mi.textContent=(ind.mom>=0?'+':'')+ind.mom.toFixed(3)+'%';mi.className=ind.mom>=0?'pos':'neg';
+    const ti=document.getElementById('iTick');ti.textContent=(ind.tick>=0?'+':'')+ind.tick.toFixed(3)+'%';ti.className=ind.tick>=0?'pos':'neg';
+  }
+
+  // Uptime
+  const up=Math.floor((Date.now()-S.startTime)/1000);
+  const h=Math.floor(up/3600),m=Math.floor((up%3600)/60),sc=up%60;
+  document.getElementById('uptime').textContent=h>0?`${h}h ${m}m ${sc}s`:m>0?`${m}m ${sc}s`:`${sc}s`;
+  document.getElementById('tradeCount').textContent=S.wins+S.losses;
+
+  // Trades
+  const tl=document.getElementById('tradeList');
+  if(!S.trades.length){tl.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">Nessun trade ancora…</div>';}
+  else{
+    tl.innerHTML=[...S.trades].reverse().slice(0,15).map(t=>{
+      const icon=t.type==='long'?'📈':'📉';
+      const dur=Math.floor(t.dur/1000);
+      const ts=new Date(t.time).toLocaleTimeString('it-IT');
+      return `<div class="trade-item"><div class="trade-icon">${icon}</div><div class="trade-info"><div class="trade-main">${t.type.toUpperCase()} · ${t.reason} · ${ts}</div><div class="trade-sub">Entry €${t.entry.toFixed(2)} → €${t.close.toFixed(2)} · ${dur}s · Lotto €${t.size.toFixed(2)}</div></div><div class="trade-pnl ${t.pnl>=0?'pos':'neg'}">${t.pnl>=0?'+':''}€${t.pnl.toFixed(4)}</div></div>`;
+    }).join('');
+  }
+
+  // Logs
+  document.getElementById('logList').innerHTML=S.logs.slice(0,12).map(l=>{
+    const ts=new Date(l.t).toLocaleTimeString('it-IT');
+    return `<div class="log-item"><div class="log-time">${ts}</div>${l.msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+  }).join('');
+}
+
+// ===== MAIN TICK =====
+async function tick() {
+  if (S.paused) return;
+  S.tickCount++;
+
+  // Ogni 30 tick tenta prezzo reale
+  if (S.tickCount % 6 === 1) {
+    tryFetchRealPrice().then(p=>{ if(p&&p>1000&&p<5000){S.basePrice=p;log(`🌐 Prezzo reale: €${p.toFixed(2)} (${S.source})`);} });
+  }
+
+  const price = simTick();
+  S.prices.push(price);
+  if (S.prices.length > 200) S.prices.shift();
+
+  const ind = calcInd(S.prices);
+  const sig = signal(ind, S.position);
+  execute(sig, price);
+  updateUI(price, ind, sig);
+}
+
+// ===== CONTROLS =====
+function togglePause() {
+  S.paused = !S.paused;
+  document.getElementById('btnPause').textContent = S.paused ? '▶ Riprendi' : '⏸ Pausa';
+  log(S.paused ? '⏸ Bot in pausa' : '▶ Bot riattivato');
+}
+function resetBot() {
+  if (!confirm('Reset? Il balance torna a €50 e lo storico viene cancellato.')) return;
+  S.balance=INITIAL_BALANCE;S.position=null;S.trades=[];S.totalPnL=0;
+  S.wins=0;S.losses=0;S.prices=[];S.startTime=Date.now();S.trendBias=0;
+  prevPrice=null;line.setData([]);
+  log('🔄 Reset — budget: €50.00');
+}
+
+// ===== START =====
+log('🚀 Bot avviato — budget: €50.00 | Strategia: EMA+RSI+Momentum');
+log('📊 Tick ogni 5 secondi | SL: 0.8% | TP: 1.4%');
+tick();
+setInterval(tick, TICK_MS);
+</script>
+</body>
+</html>
